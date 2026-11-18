@@ -1,44 +1,55 @@
 
 import { test, expect } from '@playwright/test';
 
+// Read API URL from environment variables
+const API_URL = process.env.TOOLSHOP_API_URL;
+
 test('@api A9 Get Products API with Pagination', async ({ request }) => {
 
-  // Step 1: Send GET request for the first page
+  // Step 1: Validate environment configuration
+  expect(API_URL, 'TOOLSHOP_API_URL must be configured in .env')
+    .toBeTruthy();
+
+  // Step 2: Send GET request for the first page
   const response = await request.get(
-    'https://api.practicesoftwaretesting.com/products?page=1'
+    `${API_URL}/products?page=1`
   );
 
-  // Step 2: Validate HTTP status
+  // Step 3: Validate HTTP status
   expect(response.status()).toBe(200);
   expect(response.ok()).toBeTruthy();
 
-  // Step 3: Read API response
+  // Step 4: Read API response
   const responseBody = await response.json();
 
-  // Step 4: Validate response structure
+  // Step 5: Validate response structure
+  expect(responseBody).toHaveProperty('data');
   expect(Array.isArray(responseBody.data)).toBeTruthy();
   expect(responseBody.data.length).toBeGreaterThan(0);
 
-  // Step 5: Validate pagination fields and data types
+  // Step 6: Validate pagination data types
   expect(typeof responseBody.current_page).toBe('number');
   expect(typeof responseBody.last_page).toBe('number');
   expect(typeof responseBody.per_page).toBe('number');
   expect(typeof responseBody.total).toBe('number');
 
+  // Step 7: Validate pagination values
   expect(responseBody.current_page).toBe(1);
   expect(responseBody.last_page).toBeGreaterThan(0);
   expect(responseBody.per_page).toBeGreaterThan(0);
   expect(responseBody.total).toBeGreaterThan(0);
 
+  // Validate total pages calculation
   expect(responseBody.last_page).toBe(
     Math.ceil(responseBody.total / responseBody.per_page)
   );
 
+  // Validate records per page
   expect(responseBody.data.length).toBeLessThanOrEqual(
     responseBody.per_page
   );
 
-  // Step 6: Validate individual product structure
+  // Step 8: Validate individual product structure
   const firstProduct = responseBody.data[0];
 
   expect(typeof firstProduct.id).toBe('string');
@@ -49,7 +60,7 @@ test('@api A9 Get Products API with Pagination', async ({ request }) => {
   expect(typeof firstProduct.in_stock).toBe('boolean');
   expect(typeof firstProduct.is_rental).toBe('boolean');
 
-  // Step 7: Validate nested objects
+  // Step 9: Validate category object
   expect(firstProduct.category).toEqual(
     expect.objectContaining({
       id: expect.any(String),
@@ -58,6 +69,7 @@ test('@api A9 Get Products API with Pagination', async ({ request }) => {
     })
   );
 
+  // Step 10: Validate brand object
   expect(firstProduct.brand).toEqual(
     expect.objectContaining({
       id: expect.any(String),
@@ -65,11 +77,11 @@ test('@api A9 Get Products API with Pagination', async ({ request }) => {
     })
   );
 
-  // Step 8: Request and validate second page
+  // Step 11: Request and validate second page
   if (responseBody.last_page >= 2) {
 
     const secondPageResponse = await request.get(
-      'https://api.practicesoftwaretesting.com/products?page=2'
+      `${API_URL}/products?page=2`
     );
 
     expect(secondPageResponse.status()).toBe(200);
@@ -89,7 +101,7 @@ test('@api A9 Get Products API with Pagination', async ({ request }) => {
     expect(secondPageBody.last_page).toBe(responseBody.last_page);
   }
 
-  // Step 9: Print pagination summary
+  // Step 12: Print execution summary
   console.log('Total Products:', responseBody.total);
   console.log('Total Pages:', responseBody.last_page);
   console.log('Products Per Page:', responseBody.per_page);

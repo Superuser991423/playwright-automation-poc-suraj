@@ -6,3 +6,15 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+/screenshots/
+/videos/
+
+# IDE
+.vscode/
